@@ -2,10 +2,16 @@
 
 export MSSQL_SA_PASSWORD=$DEFAULT_MSSQL_SA_PASSWORD
 
-# Iniciar el servidor SQL Server en segundo plano
-(/opt/mssql/bin/sqlservr --accept-eula & ) | grep -q "Server is listening on" && sleep 2
+# Esperar a que SQL Server esté listo para aceptar conexiones
+echo "Esperando a que SQL Server esté listo..."
+/opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P $MSSQL_SA_PASSWORD -Q "SELECT 1" > /dev/null 2>&1
+while [ $? -ne 0 ]; do
+    echo "Esperando..."
+    sleep 5
+    /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P $MSSQL_SA_PASSWORD -Q "SELECT 1" > /dev/null 2>&1
+done
 
-for restoreFile in /tmp/*.bak
+for restoreFile in /tmp/backup/*.bak  # Asegúrate de que el path sea el correcto
 do
     fileName=${restoreFile##*/}
     base=${fileName%.bak}

@@ -1,27 +1,39 @@
 FROM mcr.microsoft.com/mssql/server:2019-latest
+
 USER root
+
+# Variables de entorno para SQL Server
 ENV DEFAULT_MSSQL_SA_PASSWORD=myStrongDefault!Password
 ENV ACCEPT_EULA=Y
 
-# Instalar mssql-tools y unixodbc-dev
-RUN apt-get update && apt-get install -y mssql-tools unixodbc-dev
+# Instalar herramientas necesarias: mssql-tools, unixodbc-dev, Python y pip
+RUN apt-get update && apt-get install -y \
+    mssql-tools unixodbc-dev python3 python3-pip && \
+    apt-get clean
 
-COPY restore-db.sh entrypoint.sh /opt/mssql/bin/
-RUN chmod +x /opt/mssql/bin/restore-db.sh /opt/mssql/bin/entrypoint.sh
+# Instalar el SDK de Google API para Python
+RUN pip3 install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
 
-# Cambiar el directorio donde se almacenan los backups
-RUN mkdir -p /tmp/
+# Crear directorios necesarios
+RUN mkdir -p /tmp/ /opt/mssql/scripts /tmp/credentials
 
-# Copiar los archivos .bak directamente al directorio temporal
-COPY backup/*.bak /tmp/
+# Copiar los scripts personalizados
+#COPY restore-db.sh entrypoint.sh download_from_drive.py monitor-drive.py /opt/mssql/scripts/
+COPY restore-db.sh entrypoint.sh monitor-drive.py /opt/mssql/scripts/
 
-# Cambiar la propiedad y permisos del directorio temporal y los archivos de backup
-RUN chown -R mssql:root /tmp && \
-    chmod 0755 /tmp && \
-    chmod -R 0650 /tmp/*
+# Copiar las credenciales de la API de Google Drive
+COPY credentials.json /tmp/credentials/
 
+# Dar permisos de ejecución a los scripts
+RUN chmod +x /opt/mssql/scripts/*.sh /opt/mssql/scripts/*.py
+
+# Cambiar la propiedad y permisos de los directorios necesarios
+RUN chown -R mssql:root /tmp /opt/mssql/scripts && \
+    chmod 0755 /tmp /opt/mssql/scripts
+
+# Cambiar al usuario mssql
 USER mssql
 
-# CMD ya no ejecuta el script de restauración, lo hará el entrypoint cuando el contenedor inicie
+# Configurar el entrypoint personalizado
 CMD [ "/opt/mssql/bin/sqlservr" ]
-ENTRYPOINT [ "/opt/mssql/bin/entrypoint.sh" ]
+ENTRYPOINT [ "/opt/mssql/scripts/entrypoint.sh" ]
