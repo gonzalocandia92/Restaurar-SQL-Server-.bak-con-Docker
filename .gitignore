@@ -2,3 +2,4 @@ parino_backup_temp.bak
 test_google_drive.py
 download_from_drive.py
 credentials.json
+.restore-db.sh

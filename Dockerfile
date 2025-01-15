@@ -19,8 +19,8 @@ RUN mkdir -p /tmp/ /opt/mssql/scripts /tmp/credentials
 
 # Copiar los scripts personalizados
 #COPY restore-db.sh entrypoint.sh download_from_drive.py monitor-drive.py /opt/mssql/scripts/
-COPY restore-db.sh entrypoint.sh monitor-drive.py /opt/mssql/scripts/
-
+#COPY restore-db.sh entrypoint.sh monitor-drive.py /opt/mssql/scripts/
+COPY entrypoint.sh monitor-drive.py /opt/mssql/scripts/
 # Copiar las credenciales de la API de Google Drive
 COPY credentials.json /tmp/credentials/
 

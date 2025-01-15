@@ -120,7 +120,7 @@ def restore_database(backup_file_path):
     ldf_file = f"/var/opt/mssql/data/{db_name}_log.ldf"
 
     # Realizar la restauración de la base de datos especificando las rutas de los archivos
-    restore_command = f"/opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P $MSSQL_SA_PASSWORD -Q \"RESTORE DATABASE [{db_name}] FROM DISK = '{backup_file_path}' WITH MOVE '{db_name}' TO '{mdf_file}', MOVE '{db_name}_log' TO '{ldf_file}'\""
+    restore_command = f"""/opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P $MSSQL_SA_PASSWORD -Q "RESTORE DATABASE [{db_name}] FROM DISK = '{backup_file_path}' WITH MOVE 'parino.cmms.express' TO '{mdf_file}', MOVE 'parino.cmms.express_log' TO '{ldf_file}'" > /tmp/restore_output.log 2>&1"""
     
     # Ejecutar el comando de restauración
     result = subprocess.run(restore_command, shell=True, capture_output=True, text=True)
