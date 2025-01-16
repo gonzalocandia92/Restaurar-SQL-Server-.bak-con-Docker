@@ -15,12 +15,14 @@ RUN apt-get update && apt-get install -y \
 RUN pip3 install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
 
 # Crear directorios necesarios
-RUN mkdir -p /tmp/ /opt/mssql/scripts /tmp/credentials
+RUN mkdir -p /tmp/ /opt/mssql/scripts /tmp/credentials /mnt/external_logs
+
+# Copiar todos los archivos desde ./scripts/ al contenedor
+COPY ./scripts/* /opt/mssql/scripts/
 
 # Copiar los scripts personalizados
-#COPY restore-db.sh entrypoint.sh download_from_drive.py monitor-drive.py /opt/mssql/scripts/
-#COPY restore-db.sh entrypoint.sh monitor-drive.py /opt/mssql/scripts/
 COPY entrypoint.sh monitor-drive.py /opt/mssql/scripts/
+
 # Copiar las credenciales de la API de Google Drive
 COPY credentials.json /tmp/credentials/
 
@@ -28,12 +30,14 @@ COPY credentials.json /tmp/credentials/
 RUN chmod +x /opt/mssql/scripts/*.sh /opt/mssql/scripts/*.py
 
 # Cambiar la propiedad y permisos de los directorios necesarios
-RUN chown -R mssql:root /tmp /opt/mssql/scripts && \
-    chmod 0755 /tmp /opt/mssql/scripts
+RUN chown -R mssql:root /tmp /opt/mssql/scripts /mnt/external_logs && \
+    chmod 0755 /tmp /opt/mssql/scripts /mnt/external_logs
+
+# Configurar un volumen para los logs externos
+VOLUME /mnt/external_logs
 
 # Cambiar al usuario mssql
 USER mssql
 
 # Configurar el entrypoint personalizado
-CMD [ "/opt/mssql/bin/sqlservr" ]
 ENTRYPOINT [ "/opt/mssql/scripts/entrypoint.sh" ]

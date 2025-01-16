@@ -127,12 +127,35 @@ def restore_database(backup_file_path):
     
     if result.returncode == 0:
         logger.info(f"Restauración completada exitosamente para la base de datos: {db_name}")
+        execute_ddl_scripts(db_name)
     else:
         logger.error(f"Error durante la restauración de la base de datos: {result.stderr}")
     
     # Eliminar el archivo .bak después de la restauración
     os.remove(backup_file_path)
     logger.info(f"Archivo {backup_file_path} eliminado después de la restauración.")
+
+# Nueva función para ejecutar los scripts DDL de vistas
+def execute_ddl_scripts(db_name):
+    logger.info(f"Ejecutando scripts de DDL para las vistas en la base de datos {db_name}...")
+    
+    # Rutas a los archivos .sql
+    views_sql_files = [
+        '/opt/mssql/scripts/vw_sud_Activo.sql',
+        '/opt/mssql/scripts/vw_sud_Cliente.sql'
+    ]
+    
+    for sql_file in views_sql_files:
+        sqlcmd_command = f"""
+        /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P $MSSQL_SA_PASSWORD -d {db_name} -i {sql_file}
+        """
+        # Ejecutar cada script de vista
+        sqlcmd_result = subprocess.run(sqlcmd_command, shell=True, capture_output=True, text=True)
+        if sqlcmd_result.returncode == 0:
+            logger.info(f"Vista de {sql_file} ejecutada exitosamente.")
+        else:
+            logger.error(f"Error al ejecutar el script de {sql_file}: {sqlcmd_result.stderr}")
+
     
 if __name__ == '__main__':
     list_and_download_files()
